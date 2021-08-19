@@ -24,7 +24,8 @@
     "mongoose": "^5.13.7",
     "morgan": "^1.10.0",
     "nodemon": "^2.0.12",
-    "prettier": "^2.3.2"
+    "prettier": "^2.3.2",
+    "slugify": "^1.6.0"
   },
   "engines": {
     "node": ">=10.6.0"

@@ -152,8 +152,6 @@ const getMonthlyPlan = async (req, res) => {
   try {
     const year = req.params.year * 1;
 
-    console.log(year);
-
     const plan = await Tour.aggregate([
       {
         $unwind: '$startDates',
@@ -169,9 +167,24 @@ const getMonthlyPlan = async (req, res) => {
       {
         $group: {
           _id: { $month: '$startDates' },
-          numTourStarts: { $add: 1 },
-        },
+          numTourStarts: { $sum: 1 },
+          tours : {$push : "$name"}
+        }, 
       },
+      {
+        $addFields : {month : "$_id"}
+      },
+      {
+        $project : {
+          _id : 0
+        }
+      },
+      {
+        $sort : {numTourStarts: 1}
+      }, 
+      {
+        $limit : 12
+      }
     ]);
 
     res.status(200).json({
