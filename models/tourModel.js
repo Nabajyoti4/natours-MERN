@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify')
+const validator = require('validator')
 
 const tourSchema = new mongoose.Schema({
   name: {
@@ -7,6 +8,9 @@ const tourSchema = new mongoose.Schema({
     required: [true, 'A tour must have a name'],
     unique: true,
     trim: true,
+    maxLength : [40, 'A tour name must have less or equal then 40 charaters'],
+    minLength : [10, 'A tour name must have more or equal then 10 charaters'],
+    validate : [validator.isAlpha, 'Tour name must only contain letters']
   },
   duration: {
     type: Number,
@@ -19,20 +23,37 @@ const tourSchema = new mongoose.Schema({
   difficulty: {
     type: String,
     required: [true, 'A tour must have diffculty'],
+    enum : {
+      values : ['easy', 'medium', 'difficult'],
+      message : 'Difficulty is either : easy, medium , difficult'
+
+    }
   },
   ratingsAverage: {
     type: Number,
     default: 4.5,
+    min : [1, 'Rating must be above 1.0'],
+    max : [5, 'Rating must be less then 5.0']
   },
   ratingsQunatity: {
     type: Number,
-    default: 0,
+    default: 0, 
   },
   price: {
     type: Number,
     required: [true, 'A tour must have a price'],
   },
-  priceDiscount: Number,
+  priceDiscount: {
+    type : Number,
+    validate: {
+      validator: function(val){
+        // it only works when creating new doc , not while updating new doc
+        return val < this.price
+      },
+
+      message : "Discount ({VALUE}) must be equal or less then price"
+    }
+  },
   summary: {
     type: String,
     trim: true,
@@ -85,8 +106,15 @@ tourSchema.pre(/^find/, function(next){
 
 tourSchema.post(/^find/, function(next) {
   console.log(`Query took ${Date.now() - this.start()} milliseconds`)
-  next();
+  next(); 
 });
+
+// Aggregation Middleware
+tourSchema.pre('aggregate', function(next){
+  this.pipeline().unshift({$match : {secretTour :  {$ne : true}}});
+  next();
+}) 
+
 
 
 const Tour = mongoose.model('Tour', tourSchema);
